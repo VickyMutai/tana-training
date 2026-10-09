@@ -54,8 +54,7 @@ venv\Scripts\Activate.ps1
 Install dependencies:
 
 ```bash
-python -m pip install --upgrade pip
-python -m pip install pytest requests selenium
+python -m pip install requirements.txt
 ```
 
 Selenium Manager automatically obtains the Chrome driver when needed.
