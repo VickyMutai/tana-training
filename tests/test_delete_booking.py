@@ -89,26 +89,40 @@ def booking(client, auth_token):
                 f"{check.text} (booking {booking_id})"
             )
 
+def test_delete_booking_removes_booking(
+    create_booking, booking_data, auth_token
+):
+    created = create_booking(booking_data)
+    booking_id = created.json()["bookingid"]
+    url = f"{BASE_URL}/booking/{booking_id}"
 
-def test_delete_booking_with_token(client, auth_token, booking):
-    url, _ = booking
-    response = client.delete(
-        url, headers={"Cookie": f"token={auth_token}"},
-        timeout=TIMEOUT, allow_redirects=False,
+    before = requests.get(url, timeout=15)
+
+    assert before.status_code == 200, (
+        f"GET before deletion expected 200, got "
+        f"{before.status_code}: {before.text}"
     )
-    assert response.status_code == 201, (
-        f"DELETE expected documented example status 201, got "
-        f"{response.status_code}: {response.text}"
-    )
-    response = client.get(
-        url, headers={"Accept": "application/json"},
-        timeout=TIMEOUT, allow_redirects=False,
-    )
-    assert response.status_code == 404, (
-        f"GET after deletion expected 404 (assumption requiring confirmation), "
-        f"got {response.status_code}: {response.text}"
+    assert before.json() == booking_data, (
+        "Booking data did not match before deletion"
     )
 
+    deleted = requests.delete(
+        url,
+        headers={"Cookie": f"token={auth_token}"},
+        timeout=15,
+    )
+
+    assert deleted.status_code == 201, (
+        f"DELETE expected 201, got "
+        f"{deleted.status_code}: {deleted.text}"
+    )
+
+    after = requests.get(url, timeout=15)
+
+    assert after.status_code == 404, (
+        f"GET after deletion expected 404, got "
+        f"{after.status_code}: {after.text}"
+    )
 
 def test_delete_booking_without_auth(client, booking):
     url, original = booking

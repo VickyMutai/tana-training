@@ -3,7 +3,7 @@ import requests
 
 BASE_URL = "https://restful-booker.herokuapp.com"
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def booking_data():
     return {
         "firstname": "QA",
