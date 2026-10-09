@@ -1,0 +1,41 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.0, pytest-9.1.1, pluggy-1.6.0 -- /Users/macbook/Documents/2026/tana-training-w2/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/macbook/Documents/2026/tana-training-w2
+collecting ... collected 16 items
+
+tests/test_delete_booking.py::test_delete_booking_removes_booking PASSED [  6%]
+tests/test_delete_booking.py::test_delete_booking_without_auth PASSED    [ 12%]
+tests/test_restful_booker.py::test_create_booking_returns_200 PASSED     [ 18%]
+tests/test_restful_booker.py::test_create_booking_returns_sent_data PASSED [ 25%]
+tests/test_restful_booker.py::test_get_by_id_returns_created_booking PASSED [ 31%]
+tests/test_restful_booker.py::test_update_booking_saves_changed_firstname PASSED [ 37%]
+tests/test_restful_booker.py::test_delete_booking_removes_booking PASSED [ 43%]
+tests/test_restful_booker.py::test_update_without_auth_returns_403 PASSED [ 50%]
+tests/test_restful_booker.py::test_missing_firstname_returns_client_error FAILED [ 56%]
+e2e/test_checkout.py::test_add_to_cart_through_checkout PASSED           [ 62%]
+e2e/test_checkout.py::test_checkout_requires_last_name PASSED            [ 68%]
+e2e/test_checkout_last_name.py::test_checkout_preserves_last_name[standard_user] PASSED [ 75%]
+e2e/test_checkout_last_name.py::test_checkout_preserves_last_name[problem_user] FAILED [ 81%]
+e2e/test_login.py::test_successful_login PASSED                          [ 87%]
+e2e/test_login.py::test_failed_login PASSED                              [ 93%]
+e2e/test_login.py::test_locked_out_user_cannot_login PASSED              [100%]
+
+=================================== FAILURES ===================================
+_________________ test_missing_firstname_returns_client_error __________________
+tests/test_restful_booker.py:90: in test_missing_firstname_returns_client_error
+    assert 400 <= response.status_code < 500, (
+E   AssertionError: Expected a clean 4xx rejection, got 500: Internal Server Error
+E   assert 500 < 500
+E    +  where 500 = <Response [500]>.status_code
+_______________ test_checkout_preserves_last_name[problem_user] ________________
+e2e/test_checkout_last_name.py:76: in test_checkout_preserves_last_name
+    assert actual_last_name == CUSTOMER["last_name"], (
+E   AssertionError: problem_user: expected last name 'Tester', but got ''
+E   assert '' == 'Tester'
+E     
+E     - Tester
+=========================== short test summary info ============================
+FAILED tests/test_restful_booker.py::test_missing_firstname_returns_client_error
+FAILED e2e/test_checkout_last_name.py::test_checkout_preserves_last_name[problem_user]
+=================== 2 failed, 14 passed in 67.09s (0:01:07) ====================

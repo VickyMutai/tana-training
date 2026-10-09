@@ -1,6 +1,4 @@
 import pytest
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from locators import (
@@ -9,62 +7,73 @@ from locators import (
     FIRST_NAME, LAST_NAME,
 )
 
+from test_data import (
+    BASE_URL,
+    STANDARD_USER,
+    PROBLEM_USER,
+    PASSWORD as LOGIN_PASSWORD,
+    CUSTOMER,
+)
+
 
 @pytest.mark.parametrize(
     "username",
-    ["standard_user", "problem_user"],
+    [STANDARD_USER, PROBLEM_USER],
 )
-def test_checkout_preserves_last_name(username):
-    driver = webdriver.Chrome()
+def test_checkout_preserves_last_name(driver, wait, username):
+    driver.get(BASE_URL)
 
-    try:
-        wait = WebDriverWait(driver, 10)
-        driver.get("https://www.saucedemo.com/")
+    wait.until(
+        EC.element_to_be_clickable(USERNAME)
+    ).send_keys(username)
 
-        wait.until(
-            EC.visibility_of_element_located(USERNAME)
-        ).send_keys(username)
+    wait.until(
+        EC.element_to_be_clickable(PASSWORD)
+    ).send_keys(LOGIN_PASSWORD)
 
-        wait.until(
-            EC.visibility_of_element_located(PASSWORD)
-        ).send_keys("secret_sauce")
+    wait.until(
+        EC.element_to_be_clickable(LOGIN_BUTTON)
+    ).click()
 
-        wait.until(
-            EC.element_to_be_clickable(LOGIN_BUTTON)
-        ).click()
+    wait.until(EC.visibility_of_element_located(INVENTORY))
 
-        wait.until(EC.visibility_of_element_located(INVENTORY))
+    wait.until(
+        EC.element_to_be_clickable(ADD_BACKPACK)
+    ).click()
 
-        wait.until(
-            EC.element_to_be_clickable(ADD_BACKPACK)
-        ).click()
+    wait.until(
+        EC.element_to_be_clickable(CART_LINK)
+    ).click()
 
-        wait.until(
-            EC.element_to_be_clickable(CART_LINK)
-        ).click()
+    wait.until(
+        EC.url_to_be(BASE_URL + "cart.html"),
+        message="Cart page did not open",
+    )
 
-        wait.until(
-            EC.element_to_be_clickable(CHECKOUT_BUTTON)
-        ).click()
+    wait.until(
+        EC.element_to_be_clickable(CHECKOUT_BUTTON)
+    ).click()
 
-        first_name = wait.until(
-            EC.element_to_be_clickable(FIRST_NAME)
-        )
-        first_name.send_keys("QA")
+    wait.until(
+        EC.url_to_be(BASE_URL + "checkout-step-one.html"),
+        message="Checkout information page did not open",
+    )
 
-        last_name = wait.until(
-            EC.element_to_be_clickable(LAST_NAME)
-        )
-        last_name.send_keys("Tester")
+    first_name = wait.until(
+        EC.element_to_be_clickable(FIRST_NAME)
+    )
+    first_name.send_keys(CUSTOMER["first_name"])
 
-        first_name.click()
+    last_name = wait.until(
+        EC.element_to_be_clickable(LAST_NAME)
+    )
+    last_name.send_keys(CUSTOMER["last_name"])
 
-        actual_last_name = last_name.get_attribute("value")
+    first_name.click()
 
-        assert actual_last_name == "Tester", (
-            f"{username}: expected last name 'Tester', "
-            f"but got {actual_last_name!r}"
-        )
+    actual_last_name = last_name.get_attribute("value")
 
-    finally:
-        driver.quit()
+    assert actual_last_name == CUSTOMER["last_name"], (
+        f"{username}: expected last name "
+        f"{CUSTOMER['last_name']!r}, but got {actual_last_name!r}"
+    )

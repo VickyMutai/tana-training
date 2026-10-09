@@ -1,73 +1,112 @@
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from locators import USERNAME, PASSWORD, LOGIN_BUTTON, INVENTORY, ERROR_MESSAGE
+from locators import (
+    USERNAME,
+    PASSWORD,
+    LOGIN_BUTTON,
+    INVENTORY,
+    ERROR_MESSAGE,
+)
+
+from test_data import (
+    BASE_URL,
+    STANDARD_USER,
+    LOCKED_OUT_USER,
+    PASSWORD as LOGIN_PASSWORD,
+    INVALID_PASSWORD,
+    INVALID_LOGIN_ERROR,
+    LOCKED_OUT_ERROR
+)
 
 
-def test_successful_login():
-    driver = webdriver.Chrome()
+def test_successful_login(driver, wait):
+    driver.get(BASE_URL)
 
-    try:
-        wait = WebDriverWait(driver, 10)
-        driver.get("https://www.saucedemo.com/")
+    wait.until(
+        EC.element_to_be_clickable(USERNAME)
+    ).send_keys(STANDARD_USER)
 
-        wait.until(
-            EC.visibility_of_element_located(USERNAME)
-        ).send_keys("standard_user")
+    wait.until(
+        EC.element_to_be_clickable(PASSWORD)
+    ).send_keys(LOGIN_PASSWORD)
 
-        wait.until(
-            EC.visibility_of_element_located(PASSWORD)
-        ).send_keys("secret_sauce")
+    wait.until(
+        EC.element_to_be_clickable(LOGIN_BUTTON)
+    ).click()
 
-        wait.until(
-            EC.element_to_be_clickable(LOGIN_BUTTON)
-        ).click()
+    wait.until(
+        EC.url_to_be(BASE_URL + "inventory.html"),
+        message="Inventory page did not open after login",
+    )
 
-        inventory = wait.until(
-            EC.visibility_of_element_located(INVENTORY),
-            message="Inventory did not become visible after login",
-        )
+    inventory = wait.until(
+        EC.visibility_of_element_located(INVENTORY),
+        message="Inventory was not visible after login",
+    )
 
-        assert driver.current_url == "https://www.saucedemo.com/inventory.html"
-        assert inventory.is_displayed(), "Inventory is not displayed"
+    assert inventory.is_displayed(), "Inventory is not displayed"
 
-    finally:
-        driver.quit()
 
-def test_failed_login():
-    driver = webdriver.Chrome()
-    try:
-        wait = WebDriverWait(driver, 10)
-        driver.get("https://www.saucedemo.com/")
+def test_failed_login(driver, wait):
+    driver.get(BASE_URL)
 
-        wait.until(
-            EC.visibility_of_element_located(USERNAME)
-        ).send_keys("standard_user")
+    wait.until(
+        EC.element_to_be_clickable(USERNAME)
+    ).send_keys(STANDARD_USER)
 
-        wait.until(
-            EC.visibility_of_element_located(PASSWORD)
-        ).send_keys("wrong_password")
+    wait.until(
+        EC.element_to_be_clickable(PASSWORD)
+    ).send_keys(INVALID_PASSWORD)
 
-        wait.until(
-            EC.element_to_be_clickable(LOGIN_BUTTON)
-        ).click()
+    wait.until(
+        EC.element_to_be_clickable(LOGIN_BUTTON)
+    ).click()
 
-        error = wait.until(
-            EC.visibility_of_element_located(ERROR_MESSAGE),
-            message="Login error message did not appear",
-        )
+    error = wait.until(
+        EC.visibility_of_element_located(ERROR_MESSAGE),
+        message="Login error message did not appear",
+    )
 
-        assert error.text == (
-            "Epic sadface: Username and password do not match "
-            "any user in this service"
-        ), f"Unexpected error text: {error.text!r}"
+    assert error.text == INVALID_LOGIN_ERROR, (
+        f"Unexpected error text: {error.text!r}"
+    )
 
-        assert driver.current_url == "https://www.saucedemo.com/"
-        assert not driver.find_elements(*INVENTORY), (
-            "Inventory appeared after a rejected login"
-        )
+    assert driver.current_url == BASE_URL, (
+        f"Rejected login navigated to: {driver.current_url}"
+    )
 
-    finally:
-        driver.quit()
+    assert not driver.find_elements(*INVENTORY), (
+        "Inventory appeared after a rejected login"
+    )
 
+def test_locked_out_user_cannot_login(driver, wait):
+    driver.get(BASE_URL)
+
+    wait.until(
+        EC.element_to_be_clickable(USERNAME)
+    ).send_keys(LOCKED_OUT_USER)
+
+    wait.until(
+        EC.element_to_be_clickable(PASSWORD)
+    ).send_keys(LOGIN_PASSWORD)
+
+    wait.until(
+        EC.element_to_be_clickable(LOGIN_BUTTON)
+    ).click()
+
+    error = wait.until(
+        EC.visibility_of_element_located(ERROR_MESSAGE),
+        message="Locked-account error did not appear",
+    )
+
+    assert error.text == LOCKED_OUT_ERROR, (
+        f"Unexpected error text: {error.text!r}"
+    )
+
+    assert driver.current_url == BASE_URL, (
+        f"Locked account navigated to: {driver.current_url}"
+    )
+
+    assert not driver.find_elements(*INVENTORY), (
+        "Inventory appeared for a locked account"
+    )

@@ -8,7 +8,6 @@ GET after deletion = 404. Neither error status is specified in the docs.
 import pytest
 import requests
 
-BASE_URL = "https://restful-booker.herokuapp.com"
 TIMEOUT = 15
 
 
@@ -20,9 +19,9 @@ def client():
         yield session
 
 @pytest.fixture
-def auth_token(client):
+def auth_token(client, api_base_url):
     response = client.post(
-        f"{BASE_URL}/auth",
+        f"{api_base_url}/auth",
         json={"username": "admin", "password": "password123"},
         timeout=TIMEOUT,
         allow_redirects=False,
@@ -36,7 +35,7 @@ def auth_token(client):
 
 
 @pytest.fixture
-def booking(client, auth_token):
+def booking(client, auth_token, api_base_url):
     # Default fixture scope is function: each test gets a new booking.
     original = {
         "firstname": "Jim",
@@ -47,7 +46,7 @@ def booking(client, auth_token):
         "additionalneeds": "Breakfast",
     }
     response = client.post(
-        f"{BASE_URL}/booking",
+        f"{api_base_url}/booking",
         json=original,
         headers={"Accept": "application/json"},
         timeout=TIMEOUT,
@@ -58,7 +57,7 @@ def booking(client, auth_token):
     )
     booking_id = response.json().get("bookingid")
     assert type(booking_id) is int, "Create response has no integer bookingid"
-    url = f"{BASE_URL}/booking/{booking_id}"
+    url = f"{api_base_url}/booking/{booking_id}"
 
     try:
         assert response.json().get("booking") == original, (
@@ -90,11 +89,11 @@ def booking(client, auth_token):
             )
 
 def test_delete_booking_removes_booking(
-    create_booking, booking_data, auth_token
+    create_booking, booking_data, auth_token, api_base_url
 ):
     created = create_booking(booking_data)
     booking_id = created.json()["bookingid"]
-    url = f"{BASE_URL}/booking/{booking_id}"
+    url = f"{api_base_url}/booking/{booking_id}"
 
     before = requests.get(url, timeout=15)
 
@@ -124,7 +123,7 @@ def test_delete_booking_removes_booking(
         f"{after.status_code}: {after.text}"
     )
 
-def test_delete_booking_without_auth(client, booking):
+def test_delete_booking_without_auth(client, booking, api_base_url):
     url, original = booking
     # A separate session sends neither the token nor Basic authentication.
     with requests.Session() as anonymous:
