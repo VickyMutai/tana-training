@@ -13,7 +13,6 @@ TIMEOUT = 15
 
 @pytest.fixture
 def client():
-    # Avoid implicit .netrc authentication and inherited proxy credentials.
     with requests.Session() as session:
         session.trust_env = False
         yield session
@@ -36,7 +35,6 @@ def auth_token(client, api_base_url):
 
 @pytest.fixture
 def booking(client, auth_token, api_base_url):
-    # Default fixture scope is function: each test gets a new booking.
     original = {
         "firstname": "Jim",
         "lastname": "Brown",
@@ -65,7 +63,6 @@ def booking(client, auth_token, api_base_url):
         )
         yield url, original
     finally:
-        # Pytest reports teardown errors separately, preserving test failures.
         remaining = client.get(
             url, headers={"Accept": "application/json"},
             timeout=TIMEOUT, allow_redirects=False,
@@ -88,9 +85,7 @@ def booking(client, auth_token, api_base_url):
                 f"{check.text} (booking {booking_id})"
             )
 
-def test_delete_booking_removes_booking(
-    create_booking, booking_data, auth_token, api_base_url
-):
+def test_delete_booking_removes_booking(create_booking, booking_data, auth_token, api_base_url):
     created = create_booking(booking_data)
     booking_id = created.json()["bookingid"]
     url = f"{api_base_url}/booking/{booking_id}"
@@ -125,7 +120,6 @@ def test_delete_booking_removes_booking(
 
 def test_delete_booking_without_auth(client, booking, api_base_url):
     url, original = booking
-    # A separate session sends neither the token nor Basic authentication.
     with requests.Session() as anonymous:
         anonymous.trust_env = False
         response = anonymous.delete(
